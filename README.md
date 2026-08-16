@@ -2,7 +2,15 @@
 
 Multi-tenant SaaS operations dashboard. Portfolio piece showing a real Next.js + Prisma stack with role-based access, seeded fictional data, and a polished SaaS UI.
 
+![OpsPilot dashboard](docs/screenshots/dashboard.png)
+
 > **This is a portfolio demo.** All companies, people, and projects are fictional. There's no real auth — three demo roles let you preview the app from each role's perspective.
+
+## Screenshots
+
+| Task board | Permissions matrix |
+| --- | --- |
+| ![Kanban task board](docs/screenshots/tasks-board.png) | ![Role permissions matrix](docs/screenshots/permissions.png) |
 
 ## What's in here
 
