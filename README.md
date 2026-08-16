@@ -31,7 +31,7 @@ Multi-tenant SaaS operations dashboard. Portfolio piece showing a real Next.js +
 | Database | SQLite via Prisma (PostgreSQL-compatible schema — drop in `provider = "postgresql"` and a connection string) |
 | Charts | Recharts |
 | Icons | Lucide |
-| Auth (demo) | Signed cookie storing the active role |
+| Auth (demo) | Plain `httpOnly` cookie holding the active role — no signing, demo only |
 
 ## Run it locally
 
