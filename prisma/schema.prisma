@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
+  memberships       WorkspaceMember[]
+  ownedProjects     Project[]          @relation("ProjectOwner")
+  assignedTasks     Task[]             @relation("TaskAssignee")
+  createdTasks      Task[]             @relation("TaskCreator")
+  comments          Comment[]
+  activities        ActivityLog[]
+}
+
+model Workspace {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  industry     String
+  companySize  String
+  timezone     String   @default("UTC")
+  ownerId      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  owner        User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members      WorkspaceMember[]
+  clients      Client[]
+  projects     Project[]
+  tasks        Task[]
+  activities   ActivityLog[]
+}
+
+model WorkspaceMember {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  userId       String
+  role         String   // OWNER | ADMIN | MEMBER
+  status       String   @default("ACTIVE") // ACTIVE | PENDING | DISABLED
+  joinedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  name         String
+  contactName  String
+  email        String
+  phone        String?
+  website      String?
+  industry     String
+  companySize  String
+  status       String   @default("ACTIVE") // ACTIVE | PAUSED | ARCHIVED
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects     Project[]
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  clientId      String
+  name          String
+  description   String?
+  status        String    @default("PLANNING") // PLANNING | IN_PROGRESS | BLOCKED | REVIEW | COMPLETED | ARCHIVED
+  priority      String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  progress      Int       @default(0)
+  ownerId       String
+  startDate     DateTime?
+  dueDate       DateTime?
+  budget        Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace     Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client        Client     @relation(fields: [clientId], references: [id])
+  owner         User       @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks         Task[]
+  milestones    Milestone[]
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String   @default("PENDING") // PENDING | IN_PROGRESS | DONE
+  progress    Int      @default(0)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  projectId     String
+  title         String
+  description   String?
+  status        String    @default("BACKLOG") // BACKLOG | TODO | IN_PROGRESS | REVIEW | DONE
+  priority      String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  assigneeId    String?
+  dueDate       DateTime?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee      User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator       User      @relation("TaskCreator", fields: [createdById], references: [id])
+  comments      Comment[]
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  taskId      String
+  userId      String
+  body        String
+  createdAt   DateTime @default(now())
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  actorId      String
+  entityType   String   // Client | Project | Task
+  entityId     String
+  action       String   // created | updated | completed | commented | assigned
+  description  String
+  createdAt    DateTime @default(now())
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor        User      @relation(fields: [actorId], references: [id])
+}
